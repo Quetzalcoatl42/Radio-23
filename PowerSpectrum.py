@@ -1,7 +1,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-data = np.load('g704.npy') #Insert Data File Name
+data = np.load('noise1.npy') #Insert Data File Name
 
 data_fft = abs(np.fft.fft(data)) #Fourier Transform
 
