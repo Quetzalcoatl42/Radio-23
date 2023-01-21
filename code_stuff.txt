@@ -1,0 +1,468 @@
+radiopi@raspberrypi:~ $ ipython
+Python 3.9.2 (default, Mar 12 2021, 04:06:34) 
+Type 'copyright', 'credits' or 'license' for more information
+IPython 8.8.0 -- An enhanced Interactive Python. Type '?' for help.
+
+In [1]: import ugradio; import matplotlib.pyplot as plt; import numpy as np
+
+In [2]: ugradio.sdr
+Out[2]: <module 'ugradio.sdr' from '/home/radiopi/.local/lib/python3.9/site-packages/ugradio/sdr.py'>
+
+In [3]: sdr = ugradio.sdr
+
+In [4]: fir_coeffs = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2047])
+
+In [5]: fir_coeffs.shape
+Out[5]: (16,)
+
+In [6]: sdr = ugradio.sdr.SDR(direct=True, fir_coeffs=fir_coeffs, sample_rate =
+   ...: 3.2e6)
+usb_claim_interface error -6
+---------------------------------------------------------------------------
+LibUSBError                               Traceback (most recent call last)
+Cell In[6], line 1
+----> 1 sdr = ugradio.sdr.SDR(direct=True, fir_coeffs=fir_coeffs, sample_rate = 3.2e6)
+
+File ~/.local/lib/python3.9/site-packages/ugradio/sdr.py:70, in SDR.__init__(self, direct, center_freq, sample_rate, gain, fir_coeffs)
+     49 def __init__(self, direct=True, center_freq=1420e6, sample_rate=2.2e6,
+     50     gain=0., fir_coeffs=None):
+     51     """
+     52     Initialize SDR dongle to capture voltage samples from the input.
+     53 
+   (...)
+     68        initialized SDR object
+     69     """
+---> 70     RtlSdr.__init__(self)
+     71     self.direct = direct
+     72     if direct:
+
+File ~/.local/lib/python3.9/site-packages/rtlsdr/rtlsdr.py:133, in BaseRtlSdr.__init__(self, device_index, test_mode_enabled, serial_number)
+    132 def __init__(self, device_index=0, test_mode_enabled=False, serial_number=None):
+--> 133     self.open(device_index, test_mode_enabled, serial_number)
+
+File ~/.local/lib/python3.9/site-packages/rtlsdr/rtlsdr.py:171, in BaseRtlSdr.open(self, device_index, test_mode_enabled, serial_number)
+    169 result = librtlsdr.rtlsdr_open(self.dev_p, device_index)
+    170 if result < 0:
+--> 171     raise LibUSBError(result, 'Could not open SDR (device index = %d)' % (device_index))
+    173 # enable test mode if necessary
+    174 result = librtlsdr.rtlsdr_set_testmode(self.dev_p, int(test_mode_enabled))
+
+LibUSBError: <LIBUSB_ERROR_BUSY (-6): Resource busy> "Could not open SDR (device index = 0)"
+
+In [7]: sdr = ugradio.sdr.SDR(direct=True, fir_coeffs=fir_coeffs, sample_rate = 3.2e6)
+Found Rafael Micro R820T tuner
+[R82XX] PLL not locked!
+Enabled direct sampling mode, input 2
+
+In [8]: sdr.capture_data()
+Out[8]: 
+array([[ 0.12941177,  0.29411766,  0.2       , ..., -0.07450981,
+        -0.2784314 , -0.23137255]], dtype=float32)
+
+In [9]: sin_data = sdr.capture_data()
+
+In [10]: sin_data
+Out[10]: 
+array([[ 0.28627452,  0.11372549, -0.16078432, ...,  0.27058825,
+         0.24705882,  0.00392157]], dtype=float32)
+
+In [11]: np.savez("sunset/data2", sin_data)
+
+In [12]: np.saves("/home", sin_data)
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+Cell In[12], line 1
+----> 1 np.saves("/home", sin_data)
+
+File ~/.local/lib/python3.9/site-packages/numpy/__init__.py:311, in __getattr__(attr)
+    308     from .testing import Tester
+    309     return Tester
+--> 311 raise AttributeError("module {!r} has no attribute "
+    312                      "{!r}".format(__name__, attr))
+
+AttributeError: module 'numpy' has no attribute 'saves'
+
+In [13]: np.savez("/home", sin_data)
+---------------------------------------------------------------------------
+PermissionError                           Traceback (most recent call last)
+Cell In[13], line 1
+----> 1 np.savez("/home", sin_data)
+
+File <__array_function__ internals>:180, in savez(*args, **kwargs)
+
+File ~/.local/lib/python3.9/site-packages/numpy/lib/npyio.py:615, in savez(file, *args, **kwds)
+    531 @array_function_dispatch(_savez_dispatcher)
+    532 def savez(file, *args, **kwds):
+    533     """Save several arrays into a single file in uncompressed ``.npz`` format.
+    534 
+    535     Provide arrays as keyword arguments to store them under the
+   (...)
+    613 
+    614     """
+--> 615     _savez(file, args, kwds, False)
+
+File ~/.local/lib/python3.9/site-packages/numpy/lib/npyio.py:712, in _savez(file, args, kwds, compress, allow_pickle, pickle_kwargs)
+    709 else:
+    710     compression = zipfile.ZIP_STORED
+--> 712 zipf = zipfile_factory(file, mode="w", compression=compression)
+    714 for key, val in namedict.items():
+    715     fname = key + '.npy'
+
+File ~/.local/lib/python3.9/site-packages/numpy/lib/npyio.py:103, in zipfile_factory(file, *args, **kwargs)
+    101 import zipfile
+    102 kwargs['allowZip64'] = True
+--> 103 return zipfile.ZipFile(file, *args, **kwargs)
+
+File /usr/lib/python3.9/zipfile.py:1239, in ZipFile.__init__(self, file, mode, compression, allowZip64, compresslevel, strict_timestamps)
+   1237 while True:
+   1238     try:
+-> 1239         self.fp = io.open(file, filemode)
+   1240     except OSError:
+   1241         if filemode in modeDict:
+
+PermissionError: [Errno 13] Permission denied: '/home.npz'
+
+In [14]: import numpy as np
+    ...: data = np.load('data2.npz')
+---------------------------------------------------------------------------
+FileNotFoundError                         Traceback (most recent call last)
+Cell In[14], line 2
+      1 import numpy as np
+----> 2 data = np.load('data2.npz')
+
+File ~/.local/lib/python3.9/site-packages/numpy/lib/npyio.py:405, in load(file, mmap_mode, allow_pickle, fix_imports, encoding, max_header_size)
+    403     own_fid = False
+    404 else:
+--> 405     fid = stack.enter_context(open(os_fspath(file), "rb"))
+    406     own_fid = True
+    408 # Code to distinguish from NumPy binary files and pickles.
+
+FileNotFoundError: [Errno 2] No such file or directory: 'data2.npz'
+
+In [15]: import numpy as np
+    ...: data = np.load('sunset/data2')
+---------------------------------------------------------------------------
+FileNotFoundError                         Traceback (most recent call last)
+Cell In[15], line 2
+      1 import numpy as np
+----> 2 data = np.load('sunset/data2')
+
+File ~/.local/lib/python3.9/site-packages/numpy/lib/npyio.py:405, in load(file, mmap_mode, allow_pickle, fix_imports, encoding, max_header_size)
+    403     own_fid = False
+    404 else:
+--> 405     fid = stack.enter_context(open(os_fspath(file), "rb"))
+    406     own_fid = True
+    408 # Code to distinguish from NumPy binary files and pickles.
+
+FileNotFoundError: [Errno 2] No such file or directory: 'sunset/data2'
+
+In [16]: np.save('sunset/aaa.npy', sin_data)
+
+In [17]: np.load('sunset/aaa.npy')
+Out[17]: 
+array([[ 0.28627452,  0.11372549, -0.16078432, ...,  0.27058825,
+         0.24705882,  0.00392157]], dtype=float32)
+
+In [18]: np.load('sunset/data2.npz')
+Out[18]: <numpy.lib.npyio.NpzFile at 0xacfcfc70>
+
+In [19]: np.save('sunset/bbb.npz', sin_data)
+
+In [20]: np.load('sunset/bbb.npz')
+---------------------------------------------------------------------------
+FileNotFoundError                         Traceback (most recent call last)
+Cell In[20], line 1
+----> 1 np.load('sunset/bbb.npz')
+
+File ~/.local/lib/python3.9/site-packages/numpy/lib/npyio.py:405, in load(file, mmap_mode, allow_pickle, fix_imports, encoding, max_header_size)
+    403     own_fid = False
+    404 else:
+--> 405     fid = stack.enter_context(open(os_fspath(file), "rb"))
+    406     own_fid = True
+    408 # Code to distinguish from NumPy binary files and pickles.
+
+FileNotFoundError: [Errno 2] No such file or directory: 'sunset/bbb.npz'
+
+In [21]: plt.plot(data[0]);  plt.show()
+---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[21], line 1
+----> 1 plt.plot(data[0]);  plt.show()
+
+NameError: name 'data' is not defined
+
+In [22]: plt.plot(data[0][1200]);  plt.show()
+---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[22], line 1
+----> 1 plt.plot(data[0][1200]);  plt.show()
+
+NameError: name 'data' is not defined
+
+In [23]: plt.plot(sin_data[0][1200]);  plt.show()
+
+In [24]: data.shape?
+Object `data.shape` not found.
+
+In [25]: data.shape
+---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[25], line 1
+----> 1 data.shape
+
+NameError: name 'data' is not defined
+
+In [26]: sin_data.shape
+Out[26]: (1, 2048)
+
+In [27]: plt.plot(sin_data[0][1200])
+Out[27]: [<matplotlib.lines.Line2D at 0xacddcaa8>]
+
+In [28]: plt.show()
+   
+In [29]: sin_data_fft = np.fft.fft(sin_data)
+
+In [30]: sin_data_fft
+Out[30]: 
+array([[6.50196072+0.j        , 0.75202031+0.14826358j,
+        0.61187344-0.10884755j, ..., 0.62134044+0.08646225j,
+        0.61187344+0.10884755j, 0.75202031-0.14826358j]])
+
+In [31]: plt.plot(sin_data[0][:200])
+Out[31]: [<matplotlib.lines.Line2D at 0xacda7c10>]
+
+In [32]: plt.show()
+
+In [33]: np.save('sunset/sin_data_fft.npy')
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+Cell In[33], line 1
+----> 1 np.save('sunset/sin_data_fft.npy')
+
+File <__array_function__ internals>:179, in save(*args, **kwargs)
+
+TypeError: _save_dispatcher() missing 1 required positional argument: 'arr'
+
+In [34]: np.save('sunset/sin_data_fft.npy',sin_data_fft.npy)
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+Cell In[34], line 1
+----> 1 np.save('sunset/sin_data_fft.npy',sin_data_fft.npy)
+
+AttributeError: 'numpy.ndarray' object has no attribute 'npy'
+
+In [35]: np.save('sunset/sin_data_fft', sin_data_fft.npy)
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+Cell In[35], line 1
+----> 1 np.save('sunset/sin_data_fft', sin_data_fft.npy)
+
+AttributeError: 'numpy.ndarray' object has no attribute 'npy'
+
+In [36]: np.save('sunset/sin_data_fft', sin_data_fft)
+
+In [37]: sin_data_fft.shape
+Out[37]: (1, 2048)
+
+In [38]: sdr2 = ugradio.sdr.SDR(direct=True, fir_coeffs = fir_coeffs,  sample_rate= 2.2e7)
+usb_claim_interface error -6
+---------------------------------------------------------------------------
+LibUSBError                               Traceback (most recent call last)
+Cell In[38], line 1
+----> 1 sdr2 = ugradio.sdr.SDR(direct=True, fir_coeffs = fir_coeffs,  sample_rate= 2.2e7)
+
+File ~/.local/lib/python3.9/site-packages/ugradio/sdr.py:70, in SDR.__init__(self, direct, center_freq, sample_rate, gain, fir_coeffs)
+     49 def __init__(self, direct=True, center_freq=1420e6, sample_rate=2.2e6,
+     50     gain=0., fir_coeffs=None):
+     51     """
+     52     Initialize SDR dongle to capture voltage samples from the input.
+     53 
+   (...)
+     68        initialized SDR object
+     69     """
+---> 70     RtlSdr.__init__(self)
+     71     self.direct = direct
+     72     if direct:
+
+File ~/.local/lib/python3.9/site-packages/rtlsdr/rtlsdr.py:133, in BaseRtlSdr.__init__(self, device_index, test_mode_enabled, serial_number)
+    132 def __init__(self, device_index=0, test_mode_enabled=False, serial_number=None):
+--> 133     self.open(device_index, test_mode_enabled, serial_number)
+
+File ~/.local/lib/python3.9/site-packages/rtlsdr/rtlsdr.py:171, in BaseRtlSdr.open(self, device_index, test_mode_enabled, serial_number)
+    169 result = librtlsdr.rtlsdr_open(self.dev_p, device_index)
+    170 if result < 0:
+--> 171     raise LibUSBError(result, 'Could not open SDR (device index = %d)' % (device_index))
+    173 # enable test mode if necessary
+    174 result = librtlsdr.rtlsdr_set_testmode(self.dev_p, int(test_mode_enabled))
+
+LibUSBError: <LIBUSB_ERROR_BUSY (-6): Resource busy> "Could not open SDR (device index = 0)"
+
+In [39]: sd2 = ugradio.sdr.SDR(direct=True, fir_coeffs = fir_coeffs,  sample_rate= 2.2e7)
+usb_claim_interface error -6
+---------------------------------------------------------------------------
+LibUSBError                               Traceback (most recent call last)
+Cell In[39], line 1
+----> 1 sd2 = ugradio.sdr.SDR(direct=True, fir_coeffs = fir_coeffs,  sample_rate= 2.2e7)
+
+File ~/.local/lib/python3.9/site-packages/ugradio/sdr.py:70, in SDR.__init__(self, direct, center_freq, sample_rate, gain, fir_coeffs)
+     49 def __init__(self, direct=True, center_freq=1420e6, sample_rate=2.2e6,
+     50     gain=0., fir_coeffs=None):
+     51     """
+     52     Initialize SDR dongle to capture voltage samples from the input.
+     53 
+   (...)
+     68        initialized SDR object
+     69     """
+---> 70     RtlSdr.__init__(self)
+     71     self.direct = direct
+     72     if direct:
+
+File ~/.local/lib/python3.9/site-packages/rtlsdr/rtlsdr.py:133, in BaseRtlSdr.__init__(self, device_index, test_mode_enabled, serial_number)
+    132 def __init__(self, device_index=0, test_mode_enabled=False, serial_number=None):
+--> 133     self.open(device_index, test_mode_enabled, serial_number)
+
+File ~/.local/lib/python3.9/site-packages/rtlsdr/rtlsdr.py:171, in BaseRtlSdr.open(self, device_index, test_mode_enabled, serial_number)
+    169 result = librtlsdr.rtlsdr_open(self.dev_p, device_index)
+    170 if result < 0:
+--> 171     raise LibUSBError(result, 'Could not open SDR (device index = %d)' % (device_index))
+    173 # enable test mode if necessary
+    174 result = librtlsdr.rtlsdr_set_testmode(self.dev_p, int(test_mode_enabled))
+
+LibUSBError: <LIBUSB_ERROR_BUSY (-6): Resource busy> "Could not open SDR (device index = 0)"
+
+In [40]: sd2 = ugradio.sdr.SDR(direct=True, fir_coeff= fir_coeffs, sample_rate= 2.2e7)
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+Cell In[40], line 1
+----> 1 sd2 = ugradio.sdr.SDR(direct=True, fir_coeff= fir_coeffs, sample_rate= 2.2e7)
+
+TypeError: __init__() got an unexpected keyword argument 'fir_coeff'
+
+In [41]: sd2 = ugradio.sdr.SDR(direct=True, fir_coeff= fir_coeffs, sample_rate= 2.2e6)
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+Cell In[41], line 1
+----> 1 sd2 = ugradio.sdr.SDR(direct=True, fir_coeff= fir_coeffs, sample_rate= 2.2e6)
+
+TypeError: __init__() got an unexpected keyword argument 'fir_coeff'
+
+In [42]: ugradio.sdr
+Out[42]: <module 'ugradio.sdr' from '/home/radiopi/.local/lib/python3.9/site-packages/ugradio/sdr.py'>
+
+In [43]: sdr2 = ugradio.sdr.SDR
+
+In [44]: sdr2 = ugradio.sdr.SDR(direct=True, fir_coeffs = fir_coeffs,  sample_rate= 2.2e7)
+usb_claim_interface error -6
+---------------------------------------------------------------------------
+LibUSBError                               Traceback (most recent call last)
+Cell In[44], line 1
+----> 1 sdr2 = ugradio.sdr.SDR(direct=True, fir_coeffs = fir_coeffs,  sample_rate= 2.2e7)
+
+File ~/.local/lib/python3.9/site-packages/ugradio/sdr.py:70, in SDR.__init__(self, direct, center_freq, sample_rate, gain, fir_coeffs)
+     49 def __init__(self, direct=True, center_freq=1420e6, sample_rate=2.2e6,
+     50     gain=0., fir_coeffs=None):
+     51     """
+     52     Initialize SDR dongle to capture voltage samples from the input.
+     53 
+   (...)
+     68        initialized SDR object
+     69     """
+---> 70     RtlSdr.__init__(self)
+     71     self.direct = direct
+     72     if direct:
+
+File ~/.local/lib/python3.9/site-packages/rtlsdr/rtlsdr.py:133, in BaseRtlSdr.__init__(self, device_index, test_mode_enabled, serial_number)
+    132 def __init__(self, device_index=0, test_mode_enabled=False, serial_number=None):
+--> 133     self.open(device_index, test_mode_enabled, serial_number)
+
+File ~/.local/lib/python3.9/site-packages/rtlsdr/rtlsdr.py:171, in BaseRtlSdr.open(self, device_index, test_mode_enabled, serial_number)
+    169 result = librtlsdr.rtlsdr_open(self.dev_p, device_index)
+    170 if result < 0:
+--> 171     raise LibUSBError(result, 'Could not open SDR (device index = %d)' % (device_index))
+    173 # enable test mode if necessary
+    174 result = librtlsdr.rtlsdr_set_testmode(self.dev_p, int(test_mode_enabled))
+
+LibUSBError: <LIBUSB_ERROR_BUSY (-6): Resource busy> "Could not open SDR (device index = 0)"
+
+In [45]: sdr2 = ugradio.sdr.SDR?
+Init signature:
+ugradio.sdr.SDR(
+    direct=True,
+    center_freq=1420000000.0,
+    sample_rate=2200000.0,
+    gain=0.0,
+    fir_coeffs=None,
+)
+Docstring:     
+This adds async read support to :class:`BaseRtlSdr`
+    
+Init docstring:
+Initialize SDR dongle to capture voltage samples from the input.
+
+Arguments:
+    direct (bool): sampling mode to use. If True, use direct 
+        sampling (no mixing, center_freq and gain ignored) and
+        return real-valued data. If False, mix with LO=center_freq
+        and return complex data for standard I/Q sampling.
+    center_freq (float): center frequency in Hz of the downconverter
+        (LO of mixer). Ignored if direct == True. Default: 1420e6.
+    sample_rate (float): sample rate in Hz. Default: 2.2e6.
+    gain (float): gain in dB to apply. Probably ignored when
+        direct == True. Default: 0.
+    fir_coeffs (int ndarray): fir coefficients used in the 
+        downconverter filter. Default: None=default.
+
+Returns:
+   initialized SDR object
+File:           ~/.local/lib/python3.9/site-packages/ugradio/sdr.py
+Type:           type
+Subclasses:     
+
+In [46]: sdr2 = ugradio.sdr2.SDR?
+Object `ugradio.sdr2.SDR` not found.
+
+In [47]: sdr2 = ugradio.sdr2.SDR
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+Cell In[47], line 1
+----> 1 sdr2 = ugradio.sdr2.SDR
+
+AttributeError: module 'ugradio' has no attribute 'sdr2'
+
+In [48]: sdr = ugradio.sdr.SDR
+
+In [49]: sdr = ugradio.sdr.SDR(direct=True, fir_coeffs=fir_coeffs, sample_rate = 2.2e6)
+usb_claim_interface error -6
+---------------------------------------------------------------------------
+LibUSBError                               Traceback (most recent call last)
+Cell In[49], line 1
+----> 1 sdr = ugradio.sdr.SDR(direct=True, fir_coeffs=fir_coeffs, sample_rate = 2.2e6)
+
+File ~/.local/lib/python3.9/site-packages/ugradio/sdr.py:70, in SDR.__init__(self, direct, center_freq, sample_rate, gain, fir_coeffs)
+     49 def __init__(self, direct=True, center_freq=1420e6, sample_rate=2.2e6,
+     50     gain=0., fir_coeffs=None):
+     51     """
+     52     Initialize SDR dongle to capture voltage samples from the input.
+     53 
+   (...)
+     68        initialized SDR object
+     69     """
+---> 70     RtlSdr.__init__(self)
+     71     self.direct = direct
+     72     if direct:
+
+File ~/.local/lib/python3.9/site-packages/rtlsdr/rtlsdr.py:133, in BaseRtlSdr.__init__(self, device_index, test_mode_enabled, serial_number)
+    132 def __init__(self, device_index=0, test_mode_enabled=False, serial_number=None):
+--> 133     self.open(device_index, test_mode_enabled, serial_number)
+
+File ~/.local/lib/python3.9/site-packages/rtlsdr/rtlsdr.py:171, in BaseRtlSdr.open(self, device_index, test_mode_enabled, serial_number)
+    169 result = librtlsdr.rtlsdr_open(self.dev_p, device_index)
+    170 if result < 0:
+--> 171     raise LibUSBError(result, 'Could not open SDR (device index = %d)' % (device_index))
+    173 # enable test mode if necessary
+    174 result = librtlsdr.rtlsdr_set_testmode(self.dev_p, int(test_mode_enabled))
+
+LibUSBError: <LIBUSB_ERROR_BUSY (-6): Resource busy> "Could not open SDR (device index = 0)"
+
+In [50]: 
+
