@@ -1,14 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
-data = np.load('data3n_fft.npy') #Insert Data File Name
+data = np.load('data3n.npy') #Insert Data File Name
 
 print(data.size) #Should be 2048
 
-plt.plot(data[0]) #Create Plot
+time=np.arange(0,2048/3.2e6,1/3.2e6) #3.2e6 Sample Rate
+
+plt.plot(time,data[0]) #Create Plot ADD X-AXIS & LABELS
 
 plt.title('My title')
-plt.xlabel('categories')
-plt.ylabel('values')
+plt.xlabel('Seconds [s]')
+plt.ylabel('Volts??? [V]')
 
 plt.show()
 #Ammedment
