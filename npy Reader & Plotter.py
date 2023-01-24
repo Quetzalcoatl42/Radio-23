@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-data = np.load('g705.npy') #Insert Data File Name
+data = np.load('NN1.npy') #Insert Data File Name
 
 print(data.size) #Should be 2048
 
