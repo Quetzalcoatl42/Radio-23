@@ -13,4 +13,4 @@ plt.xlabel('Seconds [s]')
 plt.ylabel('Volts??? [V]')
 
 plt.show()
-#Ammedment
+#Ammedment 1
