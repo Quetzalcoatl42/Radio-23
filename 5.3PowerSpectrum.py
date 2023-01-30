@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-data_file='sin1500.npy'
+data_file='Lab_1/sin1500.npy'
 data = np.load(data_file) #Insert Data File Name
 
 
