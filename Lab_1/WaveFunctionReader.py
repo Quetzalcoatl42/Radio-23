@@ -9,10 +9,9 @@ data = coni.capture_data()
 
 
 
-np.save('DSB600-570.npy', data)
+np.save('#INSERT_FILE_NAME.npy', data)
 
-
+#Code to preview plot of waveform
 plt.plot(data[0])
 plt.show()
-#import IPython
-#IPython.embed()
+
